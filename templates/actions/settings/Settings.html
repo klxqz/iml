@@ -1,0 +1,266 @@
+<style type="text/css">
+    .plugin-menu{
+        float: right;
+        list-style: none;
+    }
+    .plugin-menu li{
+        float: left;
+        margin-left: 10px;
+    }
+    .plugin-menu li a{
+        text-decoration: underline;
+    }
+    div.geshifilter {
+        background-color: #f8f8f8;
+        border: 1px solid #ccc;
+        color: #222;
+        display: block;
+        line-height: 1.3;
+        margin: 0.5em;
+        overflow: auto;
+        padding: 0.5em;
+    }
+    .edit-pickup-point{
+        margin-top: 15px;
+        display: block;
+    }
+</style>
+<h1>Курьерская доставка IML</h1>
+
+
+<ul class="plugin-menu">
+    <li><a href="mailto:support@wa-plugins.ru">Поддержка разработчика плагина</a></li>
+        {*<li><a target="_blank" href="http://wa-plugins.ru/">WA-PLUGINS.ru - сайт разработчика</a></li>*}
+</ul>
+
+
+<div class="fields form">
+    <form action="?plugin=iml&action=save" method="post" id="plugins-settings-form">
+        {$wa->csrf()}
+
+        <div class="field-group">
+            <div class="field">
+                <div class="name">
+                    Статус плагина
+                </div>
+                <div class="value no-shift s-ibutton-checkbox">
+                    <input type="hidden" name="shop_iml[status]" value="0">
+                    <input type="checkbox" id="ibutton-status" name="shop_iml[status]" value="1"{if $settings.status|default:0} checked="checked"{/if}>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="field-group"{if empty($settings.status)} style="display:none"{/if}>
+            <h2 class="grey">Доступ к системе IML</h2>
+            <div class="field">
+                <div class="name">
+                    Логин
+                </div>
+                <div class="value">
+                    <input type="text" name="shop_iml[login]" value="{$settings.login|default:''|escape}" />
+                </div>
+            </div>
+            <div class="field">
+                <div class="name">
+                    Пароль
+                </div>
+                <div class="value">
+                    <input type="text" name="shop_iml[password]" value="{$settings.password|default:''|escape}" />
+                </div>
+            </div>
+            <div class="field">
+                <div class="name">
+                    Тестовый режим
+                </div>
+                <div class="value">
+                    <input type="hidden" name="shop_iml[test_mode]" value="0">
+                    <input type="checkbox" name="shop_iml[test_mode]" value="1"{if $settings.test_mode|default:0} checked="checked"{/if} />
+                    <p class="hint">Тестовый режим передачи данных</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="field-group"{if empty($settings.status)} style="display:none"{/if}>
+            <h2 class="grey">Штрих-код</h2>
+            <div class="field">
+                <div class="name">
+                    Префикс штрих-кода
+                </div>
+                <div class="value">
+                    <input type="text" name="shop_iml[barcode_prifix]" value="{$settings.barcode_prifix|default:'0000'|escape}" />
+                    <p class="hint">Префикс штрих-кода длиной 4 символа, выдается ИМ компанией IML</p>
+                </div>
+            </div>
+            <div class="field">
+                <div class="name">
+                    Текущий счетчик ИМ
+                </div>
+                <div class="value">
+                    <input type="text" name="shop_iml[barcode_counter]" value="{str_pad($settings.barcode_counter|default:0, 7, '0', 0)|escape}" disabled="disabled" />
+                    <a class="enable_edit" href="#">Редактирование</a>
+                    <p class="hint">Счетчик штрих-кода длиной 7 символов, формируется самим ИМ</p>
+                </div>
+            </div>
+            <div class="field">
+                <div class="name">
+                    Номер места (упаковки)
+                </div>
+                <div class="value">
+                    <select name="shop_iml[barcode_place_num]">
+                        {for $i=1 to 9}
+                            <option{if $settings.barcode_place_num|default:'1' == $i} selected="selected"{/if} value="{$i}">{$i}</option>
+                        {/for}
+                    </select>
+                    <p class="hint">Номер места (упаковки) длиной 1 символ, идентифицирует место, на которое наносится штрих код. Может принимать значение в диапазоне от 1 до 9 </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="field-group"{if empty($settings.status)} style="display:none"{/if}>
+            <h2 class="grey">Параметры</h2>
+            <div class="field">
+                <div class="name">
+                    Регион отправления
+                </div>
+                <div class="value">
+                    <select name="shop_iml[departure]">
+                        {foreach $departure as $_departure}
+                            <option{if $settings.departure|default:'МОСКВА' == $_departure} selected="selected"{/if} value="{$_departure}">{$_departure}</option>
+                        {/foreach}
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="field-group"{if empty($settings.status)} style="display:none"{/if}>
+            <h2 class="grey">Пункты самовывоза</h2>
+
+            <table id="pickup-points-table" class="table zebra">
+                <thead>
+                    <tr>
+                        <th>Код</th>
+                        <th>Название</th>	
+                        <th>Адрес</th>
+                        <th>Индекс</th>	
+                        <th>Регион</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {foreach $pickup_points as $pickup_point}
+                        <tr data-index="{$pickup_point@index}">
+                            <td>
+                                <input name="pickup_points[{$pickup_point@index}][0]" value="{$pickup_point[0]}" />
+                            </td>
+                            <td>
+                                <input name="pickup_points[{$pickup_point@index}][1]" value="{$pickup_point[1]}" />
+                            </td>
+                            <td>
+                                <input name="pickup_points[{$pickup_point@index}][2]" value="{$pickup_point[2]}" />
+                            </td>
+                            <td>
+                                <input name="pickup_points[{$pickup_point@index}][3]" value="{$pickup_point[3]}" />
+                            </td>
+                            <td>
+                                <input name="pickup_points[{$pickup_point@index}][4]" value="{$pickup_point[4]}" />
+                            </td>
+                            <td>
+                                <a class="delete-pickup-point" href="#"><i class="icon16 delete"></i></a>
+                            </td>
+                        </tr>
+                    {/foreach}
+                    <tr class>
+                        <td colspan="6">
+                            <a href="#" class="add-pickup-point"><i class="icon16 add"></i>Добавить</a>
+                        </td>
+                    </tr>
+                    <tr class>
+                        <td colspan="6">
+                            <input type="checkbox" name="reset_pickup_points" value="1" /> - Вернуться к исходным пунктам самовывоза
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="field-group"{if empty($settings.status)} style="display:none"{/if}>
+            <div class="field">
+                <div class="value submit">
+                    <input type="submit" class="button green" value="Сохранить">
+                    <span id="plugins-settings-form-status" style="display:none">
+                        <i style="vertical-align:middle" class="icon16 yes"></i> [`Saved`]
+                    </span>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript" src="{$wa_url}wa-content/js/jquery-plugins/jquery.tmpl.min.js"></script>
+{literal}
+    <script id="input-pickup-point-tmpl" type="text/x-jquery-tmpl">
+        <tr data-index="${index}">
+        <td>
+        <input name="pickup_points[${index}][0]" value="" />
+        </td>
+        <td>
+        <input name="pickup_points[${index}][1]" value="" />
+        </td>
+        <td>
+        <input name="pickup_points[${index}][2]" value="" />
+        </td>
+        <td>
+        <input name="pickup_points[${index}][3]" value="" />
+        </td>
+        <td>
+        <input name="pickup_points[${index}][4]" value="" />
+        </td>
+        <td>
+        <a class="delete-pickup-point" href="#"><i class="icon16 delete"></i></a>
+        </td>
+        </tr>
+    </script>
+{/literal}
+
+<script type="text/javascript">
+    $(function () {
+        $(document).on('click', '.add-pickup-point', function () {
+            var max_index = -1;
+            $('#pickup-points-table tr[data-index]').each(function () {
+                if (max_index < parseInt($(this).data('index'))) {
+                    max_index = parseInt($(this).data('index'));
+                }
+            });
+            $('#input-pickup-point-tmpl').tmpl({
+                index: max_index + 1
+            }).insertBefore($(this).closest('tr'));
+            return false;
+        });
+        $(document).on('click', '.delete-pickup-point', function () {
+            $(this).closest('tr').remove();
+            return false;
+        });
+
+        $('.enable_edit').click(function () {
+            if ($(this).prev('input').is(':disabled')) {
+                $(this).prev('input').removeAttr('disabled');
+            } else {
+                $(this).prev('input').attr('disabled', 'disabled');
+            }
+            return false;
+        });
+        $('#ibutton-status').iButton({
+            labelOn: "", labelOff: "", className: 'mini'
+        }).change(function () {
+            var self = $(this);
+            var enabled = self.is(':checked');
+            if (enabled) {
+                self.closest('.field-group').siblings().show(200);
+            } else {
+                self.closest('.field-group').siblings().hide(200);
+            }
+            var f = $("#plugins-settings-form");
+            $.post(f.attr('action'), f.serialize());
+        });
+    });
+</script>

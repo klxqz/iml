@@ -1,0 +1,23 @@
+<h1>Список заявок в курьерскую службу IML</h1>
+<div class="fields">
+    <table class="table zebra">
+        <thead>
+            <tr>
+                <th>Имя файла</th>
+                <th>Удалить</th>
+            </tr>
+        </thead>
+        <tbody>
+            {foreach $files as $file}
+                <tr>
+                    <td>
+                        <a href="#/request/file/{$file}/">{$file}</a>
+                    </td>
+                    <td class="align-right">
+                        <a class="delete-button" href="#" data-file="{$file}"><i class="icon16 delete"></i></a>
+                    </td>
+                </tr>
+            {/foreach}
+        </tbody>
+    </table>
+</div>

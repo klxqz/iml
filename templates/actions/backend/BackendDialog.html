@@ -1,0 +1,59 @@
+<style>
+    table#pickup-points tr { cursor: pointer; }
+</style>
+<div class="dialog-background"></div>
+<form id="iml-form">
+    {$wa->csrf()}
+    <div class="dialog-window">
+        <div class="dialog-content">
+            <div class="dialog-content-indent">
+                <h1>Пункты самовывоза</h1>
+
+                <table id="pickup-points" class="table zebra">
+                    <thead>
+                    <th>Код</th>
+                    <th>Название</th>	
+                    <th>Адрес</th>
+                    <th>Индекс</th>	
+                    <th>Регион</th>
+                    </thead>
+                    <tbody>
+                        {foreach $pickup_points as $pickup_point}
+                            <tr data-point="{$pickup_point[0]}">
+                                <td>{$pickup_point[0]}</td>
+                                <td>{$pickup_point[1]}</td>
+                                <td>{$pickup_point[2]}</td>
+                                <td>{$pickup_point[3]}</td>
+                                <td>{$pickup_point[4]}</td>
+                            </tr>
+                        {/foreach}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="dialog-buttons">
+            <div class="dialog-buttons-gradient">
+                <input type="submit" value="Выбрать" class="button green">
+                <i class="icon16 loading" style="display:none;"></i>
+                <a class="cancel" href="#">Отмена</a>
+                <a style="display:none;" class="close" href="#">Закрыть</a>
+                <span style="display:none;" class="mergerorder-response"></span>
+            </div>
+        </div>
+    </div>
+</form>        
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.cancel').click(function () {
+            $('#iml-dialog').trigger('close');
+        });
+        $('#pickup-points tr').click(function () {
+            $(this).siblings().removeClass('selected');
+            $(this).addClass('selected');
+        });
+        $('#pickup-points tr').dblclick(function () {
+            $('.deliveryPoint').val($(this).data('point'));
+            $('#iml-dialog').trigger('close');
+        });
+    });
+</script>

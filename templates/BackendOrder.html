@@ -1,0 +1,165 @@
+<style>
+    li.iml-block{
+        padding-left: 0px !important;
+        margin-left: 0px !important;
+    }
+    li.iml-block input[type=text],
+    li.iml-block select,
+    li.iml-block textarea{
+        margin-bottom: 5px;
+    }
+    li.iml-block select{
+        width: 150px;
+    }
+    li.iml-block textarea{
+        width: 145px;
+    }
+    #select-delivery-point[disabled]{
+        box-shadow: none;
+        cursor: not-allowed;
+        opacity: 0.65;
+        pointer-events: none;
+    }
+</style>
+<li class="iml-block">
+    <h3>Информация для IML</h3>
+    <form id="iml-form" action="?plugin=iml&action=saveOrder" method="POST">
+        <input type="hidden" name="order_id" value="{$order.id|default:0}" />
+        Услуга:<br/>
+        <select class="service" name="iml[service]">
+            <option value=""></option>
+            {foreach $services as $service => $service_name}
+                <option {if $iml_params.service|default:'' == $service}selected="selected"{/if} value="{$service}">{$service} - {$service_name}</option>
+            {/foreach}
+        </select><br/>
+        Дата доставки:<br/>
+        <input type="text" name="iml[issue]" placeholder="2011-01-10" value="{$iml_params.issue|default:''|escape}" /><br/>
+        Время от:<br/>
+        <input type="text" name="iml[timeFrom]" placeholder="18:00" value="{$iml_params.timeFrom|default:''|escape}" /><br/>
+        Время до:<br/>
+        <input type="text" name="iml[timeTo]" placeholder="21:00" value="{$iml_params.timeTo|default:''|escape}" /><br/>
+        Комментарий:<br/>
+        <textarea name="iml[comment]">{$iml_params.comment|default:''|escape}</textarea><br/>
+        Регион отправления:<br/>
+        <select name="iml[departure]">
+            {foreach $list003 as $_departure}
+                <option {if $iml_params.departure|default:'' == $_departure}selected="selected"{/if} value="{$_departure}">{$_departure}</option>
+            {/foreach}
+        </select><br/>
+        Регион получения:<br/>
+        <select name="iml[destination]">
+            {foreach $list003 as $_destination}
+                <option {if $iml_params.destination|default:'' == $_destination}selected="selected"{/if} value="{$_destination}">{$_destination}</option>
+            {/foreach}
+        </select><br/>
+        Локальный адрес доставки:<br/>
+        <input type="text" name="iml[line]" placeholder="столярный пер.,  1 стр., 11" value="{$iml_params.line|default:''|escape}" /><br/>
+        Город доставки:<br/>
+        <input type="text" name="iml[city]" placeholder="Москва" value="{$iml_params.city|default:''|escape}" /><br/>
+        Индекс доставки:<br/>
+        <input type="text" name="iml[postCode]" placeholder="102205" value="{$iml_params.postCode|default:''|escape}" /><br/>
+        Пункт самовывоза(<a id="select-delivery-point" class="inline" href="#">Выбрать</a>):<br/>
+        <input type="hidden" name="iml[deliveryPoint]" value="" />
+        <input type="text" class="deliveryPoint" name="iml[deliveryPoint]" value="{$iml_params.deliveryPoint|default:''|escape}" {if !$is_pickup}disabled="disabled"{/if} /><br/>
+
+        <input type="submit" value="Сохранить" />
+        <input type="button" id="iml-send-order" value="Отправить" />
+    </form>
+    <div style="display: none;" id="iml-dialog"></div>
+</li>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#iml-send-order').click(function () {
+            var self = $(this);
+            var order_ids = [];
+            order_ids.push($('input[name="order_id"]').val());
+
+            $(this).after('<i class="icon16 loading"></i>');
+            $.ajax({
+                url: '?plugin=iml&action=sendOrders',
+                type: 'POST',
+                data: {
+                    order_ids: order_ids
+                },
+                success: function (data, textStatus) {
+                    self.next('i.icon16.loading').remove();
+                    if (data.status == 'ok') {
+                        alert(data.data.message);
+                    } else {
+                        alert(data.errors.join(' '));
+                    }
+                }
+            });
+            return false;
+        });
+        $('#select-delivery-point').click(function () {
+            $(this).after('<i class="icon16 loading"></i>');
+            var url = '?plugin=iml&action=dialog';
+            $.ajax({
+                type: 'GET',
+                url: url,
+                dataType: 'html',
+                success: function (html) {
+                    $('#iml-dialog').html(html);
+                    showDialog();
+                }
+            });
+            return false;
+        });
+        function showDialog() {
+            $('#iml-dialog').waDialog({
+                disableButtonsOnSubmit: false,
+                onLoad: function () {
+                    $('#select-delivery-point').next('.loading').remove();
+                },
+                onSubmit: function (d) {
+                    if ($('#pickup-points tr.selected').length) {
+                        $('.deliveryPoint').val($('#pickup-points tr.selected').data('point'));
+                        $('#iml-dialog').trigger('close');
+                    } else {
+                        alert('Выбирите пункт самовывоза. Для этого кликните на один из пунктов.');
+                    }
+                    return false;
+                }
+            });
+        }
+
+        function in_array(what, where) {
+            for (var i = 0; i < where.length; i++)
+                if (what == where[i])
+                    return true;
+            return false;
+        }
+
+        var pickup_services = {json_encode($pickup_services)};
+        $('.service').change(function () {
+            $(this).val();
+            if (in_array($(this).val(), pickup_services)) {
+                $('.deliveryPoint').removeAttr('disabled');
+                $('#select-delivery-point').removeAttr('disabled');
+            } else {
+                $('.deliveryPoint').attr('disabled', 'disabled');
+                $('#select-delivery-point').attr('disabled', 'disabled');
+            }
+        });
+        $('.service').change();
+        $('#iml-form').submit(function () {
+            var form = $(this);
+            $(this).after('<i class="icon16 loading"></i>');
+            $.ajax({
+                url: form.attr('action'),
+                type: 'POST',
+                data: form.serialize(),
+                success: function (data, textStatus) {
+                    form.next('i.icon16.loading').remove();
+                    if (data.status == 'ok') {
+
+                    } else {
+                        alert(data.errors.join(', '));
+                    }
+                }
+            });
+            return false;
+        });
+    });
+</script>
