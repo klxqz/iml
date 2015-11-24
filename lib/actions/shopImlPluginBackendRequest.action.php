@@ -11,13 +11,13 @@ class shopImlPluginBackendRequestAction extends waViewAction {
         $settings = $app_settings_model->get(shopImlPlugin::$plugin_id);
 
         $filename = waRequest::get('file');
-        $iml = new shopIml('https://request.imlogistic.ru', $settings['login'], $settings['password']);
-        $request = $iml->getFile($filename);
-
-        $this->view->assign(array(
-            'filename' => $filename,
-            'request' => $request,
-        ));
+        try {
+            $iml = new shopIml('https://request.imlogistic.ru', $settings['login'], $settings['password']);
+            $request = $iml->getFile($filename);
+            $this->view->assign('request', $request);
+        } catch (waException $ex) {
+            $this->view->assign('error', $ex->getMessage());
+        }
     }
 
 }

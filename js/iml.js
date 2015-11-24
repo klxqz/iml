@@ -139,9 +139,12 @@
                     success: function (data, textStatus, jqXHR) {
                         if (data.status == 'ok') {
                             self.closest('tr').remove();
+                        } else {
+                            alert(data.errors.join(' '));
                         }
                     },
                     error: function (jqXHR, errorText) {
+                        alert(jqXHR.responseText);
                     }
                 });
                 return false;

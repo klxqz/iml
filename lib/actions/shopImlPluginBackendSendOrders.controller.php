@@ -118,7 +118,9 @@ XML;
         $order_xml->appendChild($consignee_xml);
 
         $self_delivery_xml = $this->dom->createElement("SelfDelivery");
-        $this->addDomValue($self_delivery_xml, 'deliveryPoint', '');
+        if (!empty($iml_params['deliveryPoint'])) {
+            $this->addDomValue($self_delivery_xml, 'deliveryPoint', $iml_params['deliveryPoint']);
+        }
         $order_xml->appendChild($self_delivery_xml);
 
         $goods_measure_xml = $this->dom->createElement("GoodsMeasure");
