@@ -4,7 +4,7 @@ return array(
     'name' => 'Курьерская доставка IML',
     'description' => '',
     'vendor' => 985310,
-    'version' => '1.0.0',
+    'version' => '1.1.0',
     'img' => 'img/iml.png',
     'shop_settings' => true,
     'frontend' => false,

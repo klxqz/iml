@@ -42,14 +42,14 @@
         <textarea name="iml[comment]">{$iml_params.comment|default:''|escape}</textarea><br/>
         Регион отправления:<br/>
         <select name="iml[departure]">
-            {foreach $list003 as $_departure}
-                <option {if $iml_params.departure|default:'' == $_departure}selected="selected"{/if} value="{$_departure}">{$_departure}</option>
+            {foreach $shipping_cities as $shipping_city}
+                <option {if $iml_params.departure|default:'' == $shipping_city}selected="selected"{/if} value="{$shipping_city}">{$shipping_city}</option>
             {/foreach}
         </select><br/>
         Регион получения:<br/>
         <select name="iml[destination]">
-            {foreach $list003 as $_destination}
-                <option {if $iml_params.destination|default:'' == $_destination}selected="selected"{/if} value="{$_destination}">{$_destination}</option>
+            {foreach $shipping_cities as $shipping_city}
+                <option {if $iml_params.destination|default:'' == $shipping_city}selected="selected"{/if} value="{$shipping_city}">{$shipping_city}</option>
             {/foreach}
         </select><br/>
         Локальный адрес доставки:<br/>

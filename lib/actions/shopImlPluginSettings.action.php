@@ -12,9 +12,16 @@ class shopImlPluginSettingsAction extends waViewAction {
         } else {
             $pickup_points = include wa()->getAppPath('plugins/iml/lib/config/config.php', 'shop');
         }
+        
+        $config_path = wa()->getConfig()->getConfigPath('plugins/iml/shipping_cities.php', true, 'shop');
+        if (file_exists($config_path)) {
+            $shipping_cities = include $config_path;
+        } else {
+            $shipping_cities = include wa()->getAppPath('plugins/iml/lib/config/shipping_cities.php', 'shop');
+        }
 
         $this->view->assign('settings', $settings);
-        $this->view->assign('departure', shopImlPlugin::$list003);
+        $this->view->assign('shipping_cities', $shipping_cities);
         $this->view->assign('pickup_points', $pickup_points);
     }
 

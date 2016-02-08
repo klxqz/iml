@@ -29,6 +29,27 @@ class shopImlPluginBackendSaveController extends waJsonController {
             if ($reset_pickup_points) {
                 @unlink($config_path);
             }
+            
+            $shipping_cities = waRequest::post('shipping_cities', array());
+            if (is_array($shipping_cities)) {
+                foreach ($shipping_cities as $index => $shipping_city) {
+                    if (empty($shipping_city)) {
+                        unset($shipping_cities[$index]);
+                    }
+                }
+                unset($shipping_city);
+                $shipping_cities = array_values($shipping_cities);
+                sort($shipping_cities);
+            }
+            $config_path = wa()->getConfig()->getConfigPath('plugins/iml/shipping_cities.php', true, 'shop');
+
+            waUtils::varExportToFile($shipping_cities, $config_path);
+
+            $reset_shipping_cities = waRequest::post('reset_shipping_cities');
+
+            if ($reset_shipping_cities) {
+                @unlink($config_path);
+            }
 
             $this->response['message'] = "Сохранено";
         } catch (Exception $e) {

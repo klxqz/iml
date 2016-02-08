@@ -23,26 +23,29 @@ class shopImlPlugin extends shopPlugin {
         'С24КО',
         'С24НАЛ',
     );
-    public static $list003 = array(
-        'БРЯНСК',
-        'ВЛАДИМИР',
-        'ВОЛОГДА',
-        'ЕКАТЕРИНБУРГ',
-        'ИВАНОВО',
-        'КАЛУГА',
-        'КОСТРОМА',
-        'МОСКВА',
-        'НИЖНИЙ НОВГОРОД',
-        'ОРЕЛ',
-        'РЯЗАНЬ',
-        'САНКТ-ПЕТЕРБУРГ',
-        'ТВЕРЬ',
-        'ТУЛА',
-        'ТЮМЕНЬ',
-        'ЧЕЛЯБИНСК',
-        'ЯРОСЛАВЛЬ',
-        'РОСТОВ-НА-ДОНУ',
-    );
+
+    /*
+      public static $list003 = array(
+      'БРЯНСК',
+      'ВЛАДИМИР',
+      'ВОЛОГДА',
+      'ЕКАТЕРИНБУРГ',
+      'ИВАНОВО',
+      'КАЛУГА',
+      'КОСТРОМА',
+      'МОСКВА',
+      'НИЖНИЙ НОВГОРОД',
+      'ОРЕЛ',
+      'РЯЗАНЬ',
+      'САНКТ-ПЕТЕРБУРГ',
+      'ТВЕРЬ',
+      'ТУЛА',
+      'ТЮМЕНЬ',
+      'ЧЕЛЯБИНСК',
+      'ЯРОСЛАВЛЬ',
+      'РОСТОВ-НА-ДОНУ',
+      );
+     */
 
     public function backendMenu($param) {
         if ($this->getSettings('status')) {
@@ -82,7 +85,14 @@ class shopImlPlugin extends shopPlugin {
                 $destination = mb_strtoupper($order['params']['shipping_address.city']);
             }
 
-            if (empty($iml_params['destination']) && in_array($destination, self::$list003)) {
+            $config_path = wa()->getConfig()->getConfigPath('plugins/iml/shipping_cities.php', true, 'shop');
+            if (file_exists($config_path)) {
+                $shipping_cities = include $config_path;
+            } else {
+                $shipping_cities = include wa()->getAppPath('plugins/iml/lib/config/shipping_cities.php', 'shop');
+            }
+
+            if (empty($iml_params['destination']) && in_array($destination, $shipping_cities)) {
                 $iml_params['destination'] = $destination;
             }
             if (empty($iml_params['line']) && !empty($order['params']['shipping_address.street'])) {
@@ -105,7 +115,7 @@ class shopImlPlugin extends shopPlugin {
             }
 
 
-            $view->assign('list003', self::$list003);
+            $view->assign('shipping_cities', $shipping_cities);
             $view->assign('is_pickup', $is_pickup);
             $view->assign('settings', $settings);
             $view->assign('iml_params', $iml_params);
@@ -126,8 +136,15 @@ class shopImlPlugin extends shopPlugin {
         if (!empty($order['params']['shipping_address.city'])) {
             $destination = mb_strtoupper($order['params']['shipping_address.city']);
         }
+        
+        $config_path = wa()->getConfig()->getConfigPath('plugins/iml/shipping_cities.php', true, 'shop');
+        if (file_exists($config_path)) {
+            $shipping_cities = include $config_path;
+        } else {
+            $shipping_cities = include wa()->getAppPath('plugins/iml/lib/config/shipping_cities.php', 'shop');
+        }
 
-        if (empty($iml_params['destination']) && in_array($destination, self::$list003)) {
+        if (empty($iml_params['destination']) && in_array($destination, $shipping_cities)) {
             $iml_params['destination'] = $destination;
         } else {
             $iml_params['destination'] = '';
