@@ -40,6 +40,7 @@ class shopImlPluginBackendSendOrdersController extends waJsonController {
 
         $this->checkRequiredField($order);
 
+        $total = $this->getTotal($order['items']);
         $iml_params = json_decode($order['iml'], true);
 
 
@@ -127,8 +128,8 @@ XML;
         $goods_measure = array(
             'weight' => $this->getTotalWeight($order['items']),
             'volume' => null,
-            'amount' => $order['total'],
-            'statisticalValue' => $order['total'],
+            'amount' => $total,
+            'statisticalValue' => $total,
         );
         $this->arrayToXml($goods_measure_xml, $goods_measure);
         $order_xml->appendChild($goods_measure_xml);
@@ -151,22 +152,25 @@ XML;
             $this->arrayToXml($item_xml, $item);
             $goods_items_xml->appendChild($item_xml);
         }
-        if ($order['shipping'] > 0) {
-            $item = array(
-                'productNo' => 'shipping',
-                'productName' => 'Доставка',
-                'productVariant' => '',
-                'productBarCode' => $this->getBarCode(),
-                'couponCode' => null,
-                'discount' => null,
-                'weightLine' => null,
-                'amountLine' => $order['shipping'],
-                'statisticalValueLine' => $order['shipping'],
-            );
-            $item_xml = $this->dom->createElement("Item");
-            $this->arrayToXml($item_xml, $item);
-            $goods_items_xml->appendChild($item_xml);
-        }
+        /*
+          if ($order['shipping'] > 0) {
+          $item = array(
+          'productNo' => 'shipping',
+          'productName' => 'Доставка',
+          'productVariant' => '',
+          'productBarCode' => $this->getBarCode(),
+          'couponCode' => null,
+          'discount' => null,
+          'weightLine' => null,
+          'amountLine' => $order['shipping'],
+          'statisticalValueLine' => $order['shipping'],
+          );
+          $item_xml = $this->dom->createElement("Item");
+          $this->arrayToXml($item_xml, $item);
+          $goods_items_xml->appendChild($item_xml);
+          }
+         * 
+         */
 
 
         $order_xml->appendChild($goods_items_xml);
@@ -179,6 +183,14 @@ XML;
 
         $iml = new shopIml('https://request.imlogistic.ru', $settings['login'], $settings['password']);
         $iml->sendFile($path);
+    }
+
+    private function getTotal($items) {
+        $total = 0;
+        foreach ($items as $item) {
+            $total += $item['price'] * $item['quantity'];
+        }
+        return $total;
     }
 
     private function getTotalWeight($items) {
