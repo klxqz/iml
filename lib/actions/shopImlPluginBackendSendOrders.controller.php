@@ -41,6 +41,7 @@ class shopImlPluginBackendSendOrdersController extends waJsonController {
         $this->checkRequiredField($order);
 
         $total = $this->getTotal($order['items']);
+        $shipping_discount = $order['shipping'] - $order['discount'];
         $iml_params = json_decode($order['iml'], true);
 
 
@@ -128,14 +129,23 @@ XML;
         $goods_measure = array(
             'weight' => $this->getTotalWeight($order['items']),
             'volume' => null,
-            'amount' => $total,
+            'amount' => 0,
             'statisticalValue' => $total,
         );
+        if (!in_array($iml_params['service'], array('24', 'В24', 'С24', 'СВ24', 'Э24'))) {
+            $goods_measure['amount'] = $total + $shipping_discount;
+        }
+
         $this->arrayToXml($goods_measure_xml, $goods_measure);
         $order_xml->appendChild($goods_measure_xml);
 
         $goods_items_xml = $this->dom->createElement("GoodsItems");
 
+        $shipping_discount_item = floor($shipping_discount / count($order['items']) * 100) / 100;
+
+        $shipping_discount_last_item = round($shipping_discount - $shipping_discount_item * count($order['items']), 2);
+
+        $iteration = 1;
         foreach ($order['items'] as $_item) {
             $item = array(
                 'productNo' => $_item['sku_id'] . '-' . ($_item['sku_code'] ? $_item['sku_code'] : '0'),
@@ -145,12 +155,19 @@ XML;
                 'couponCode' => null,
                 'discount' => null,
                 'weightLine' => $this->getProductWeight($_item['product_id']),
-                'amountLine' => $_item['price'] * $_item['quantity'],
+                'amountLine' => 0,
                 'statisticalValueLine' => $_item['price'] * $_item['quantity'],
             );
+            if (!in_array($iml_params['service'], array('24', 'В24', 'С24', 'СВ24', 'Э24'))) {
+                $item['amountLine'] = $_item['price'] * $_item['quantity'] + $shipping_discount_item;
+                if ($iteration == count($order['items'])) {
+                    $item['amountLine'] += $shipping_discount_last_item;
+                }
+            }
             $item_xml = $this->dom->createElement("Item");
             $this->arrayToXml($item_xml, $item);
             $goods_items_xml->appendChild($item_xml);
+            $iteration++;
         }
         /*
           if ($order['shipping'] > 0) {
@@ -181,7 +198,7 @@ XML;
         $path = wa()->getTempPath('plugins/iml/', 'shop') . $name;
         $this->dom->save($path);
 
-        $iml = new shopIml('https://request.imlogistic.ru', $settings['login'], $settings['password']);
+        $iml = new shopIml('https://request.iml.ru', $settings['login'], $settings['password']);
         $iml->sendFile($path);
     }
 

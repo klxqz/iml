@@ -8,7 +8,7 @@ class shopImlPluginBackendDeleteFileController extends waJsonController {
 
         $filename = waRequest::post('file');
         try {
-            $iml = new shopIml('https://request.imlogistic.ru', $settings['login'], $settings['password']);
+            $iml = new shopIml('https://request.iml.ru', $settings['login'], $settings['password']);
             $request = $iml->deleteFile($filename);
         } catch (waException $ex) {
             $this->errors[] = $ex->getMessage();

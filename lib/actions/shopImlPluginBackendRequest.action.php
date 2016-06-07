@@ -12,7 +12,7 @@ class shopImlPluginBackendRequestAction extends waViewAction {
 
         $filename = waRequest::get('file');
         try {
-            $iml = new shopIml('https://request.imlogistic.ru', $settings['login'], $settings['password']);
+            $iml = new shopIml('https://request.iml.ru', $settings['login'], $settings['password']);
             $request = $iml->getFile($filename);
             $this->view->assign('request', $request);
         } catch (waException $ex) {
